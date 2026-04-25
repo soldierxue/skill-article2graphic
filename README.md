@@ -1,55 +1,72 @@
-# article2graphic — Kiro Skill for Article Infographic Generation
+# article2graphic — 文章信息图生成 Skill
 
-将文章/故事 Markdown 转换为高质量信息图（PNG/SVG）。
+[English](README-EN.md)
 
-通过 AI agent（kiro-cli / claude code）生成，不需要额外配置大语言模型或 AWS credentials。
+将 Markdown 文章自动转换为一系列高质量信息图（PNG/SVG）。
+
+通过 AI agent 驱动生成，不需要额外配置大语言模型或 API 密钥。支持 Kiro、OpenClaw、Claude Code 三种 agent。
 
 ## ✨ 特性
 
-- 🤖 Agent 驱动：通过 kiro-cli / claude code 生成，零 LLM 配置
-- 🎨 10+ 视觉风格：暗色科技、黑板粉笔、蓝图、报纸、仪表盘、时间线等
+- 🤖 Agent 驱动：零 LLM 配置，用户已有的 agent 就是生成引擎
+- 🎨 10+ 视觉风格：dark、gradient、chalkboard、blueprint、newspaper、dashboard、timeline、paradigm、architecture 等
 - 📄 7 种图示类型：数据对比图、流程链条图、CSS 柱状图、信息卡片阵列、金句卡片、时间线、概念类比
+- 📱 多页分镜：每个章节一张图，统一主风格，通过图示类型变化制造视觉节奏
 - 🖼️ 双模式输出：HTML+Playwright 截图（默认）或 SVG 矢量图
-- 📱 多页分镜：从 Markdown 中的 `infographic_spec` JSON 块批量生成
 - 🔖 自动水印：注入公众号二维码到右上角（可选）
 
-## 📦 安装为 Kiro Global Skill
+## 📦 安装
+
+### 作为 Kiro Global Skill
 
 ```bash
 git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills/article2graphic
 ```
 
-安装后，在 Kiro 对话中提到"生成信息图"、"infographic"、"文章配图"等关键词时会自动激活。
+### 作为独立项目
+
+```bash
+git clone https://github.com/soldierxue/skill-article2graphic.git
+cd skill-article2graphic
+pip install playwright
+playwright install chromium
+```
 
 ## 🔧 依赖
 
 ```bash
-# 截图工具（必需）
 pip install playwright
 playwright install chromium
-
-# Agent（二选一）
-# - kiro-cli（优先检测）
-# - claude code
 ```
 
-不需要 boto3，不需要 AWS credentials。
+不需要 boto3，不需要 AWS credentials，不需要配置模型。
 
-## 🚀 用法
+## 🚀 三种使用方式
 
-### 命令行
+### 方式 A：Kiro / OpenClaw IDE（推荐）
+
+安装为 Kiro global skill 后，在对话中说：
+
+> 帮我为这篇文章生成信息图
+
+Agent 会自动激活 SKILL.md，按流程执行：
+1. 扫描文章章节结构，规划分镜 spec
+2. 逐页生成 HTML（读取 `prompts/` 下的设计规范）
+3. 调用 `screenshot.py` 批量截图 + 注入二维码
+
+OpenClaw 同理，引用 SKILL.md 即可。
+
+### 方式 B：CLI 模式（kiro-cli / Claude Code）
 
 ```bash
-cd ~/.kiro/skills/article2graphic
+# 自动检测可用 agent（kiro-cli 优先）
+./scripts/run.sh gen --story article.md
 
-# 从 Markdown 文章生成信息图
-./scripts/run.sh generate --story path/to/article.md
+# 指定使用 Claude Code
+./scripts/run.sh gen --story article.md --agent claude
 
-# 指定输出目录
-./scripts/run.sh gen --story article.md --output-dir my-output
-
-# 使用 SVG 模式
-./scripts/run.sh gen --story article.md --method svg
+# 从 JSON spec 生成
+cat spec.json | ./scripts/run.sh gen --from-spec --slug my-article
 
 # 只生成 prompt 不调用 agent（调试用）
 ./scripts/run.sh gen --story article.md --dry-run
@@ -58,17 +75,16 @@ cd ~/.kiro/skills/article2graphic
 ./scripts/run.sh screenshot output/ --inject-qrcode
 ```
 
-### 在 Kiro 中使用
+### 方式 C：手动模式
 
-直接在 Kiro 对话中说：
+1. 提取 spec：`python3 scripts/extract_spec.py article.md > spec.json`
+2. 手动编写分镜 spec JSON（参考下方格式）
+3. 将 prompt 粘贴给任意 AI agent 生成 HTML
+4. 截图：`python3 scripts/screenshot.py --html-dir output/ --inject-qrcode`
 
-> 帮我为这篇文章生成信息图
+## 📝 输入格式
 
-Kiro 会自动激活 article2graphic skill。
-
-## 📝 Markdown 输入格式
-
-文章中包含 `infographic_spec` JSON 块即可：
+### 方式 1：文章中嵌入 infographic_spec
 
 ```markdown
 ### INFOGRAPHIC 图示规格
@@ -78,43 +94,51 @@ Kiro 会自动激活 article2graphic skill。
   {
     "page": 1,
     "type": "数据对比图",
-    "title": "AI 推理成本对比",
+    "title": "核心指标对比",
     "color_scheme": "dark",
-    "focal_point": "成本差异 10x",
-    "memory_hook": "一杯咖啡 vs 一顿大餐",
-    "data": { "left": "传统推理", "right": "解耦推理" }
+    "focal_point": "关键差异",
+    "memory_hook": "记忆点",
+    "data": { ... }
   }
 ]
 ```　
 ```
 
-如果没有 `infographic_spec`，会自动使用默认配置生成一张封面图。
+### 方式 2：独立 spec JSON 文件
 
-## 🎨 视觉风格一览
+参考 `T12-MStories/ironwood-vs-trainium3-spec.json` 的格式。
+
+### 方式 3：无 spec（agent 自动规划）
+
+如果文章没有 `infographic_spec`，agent 会按 SKILL.md 的规则自动规划：
+- 分镜数量 = 文章章节数量
+- 统一主风格，通过图示类型变化制造节奏
+
+## 🎨 视觉风格
 
 | style | 说明 | 适合场景 |
 |-------|------|---------|
 | `dark` | 科技暗色 | 数据对比、技术概览 |
-| `light` | 简洁亮色 | 通用信息卡片 |
+| `gradient` | 渐变卡片风 | 大会报道、社交媒体 |
 | `chalkboard` | 黑板粉笔风 | 教学、概念解释 |
 | `blueprint` | 蓝图工程风 | 技术架构 |
-| `newspaper` | 报纸杂志风 | 新闻摘要、多栏排版 |
-| `gradient` | 渐变卡片风 | 社交媒体友好 |
-| `paradigm` | 范式转变对照 | 新旧对比、变革 |
-| `dashboard` | 数据仪表盘 | 多维度指标、评分 |
+| `newspaper` | 报纸杂志风 | 新闻摘要 |
+| `dashboard` | 数据仪表盘 | 多维度指标 |
 | `timeline` | 蛇形时间线 | 步骤、里程碑 |
-| `architecture` | 云架构图 | 技术架构、流程 |
+| `paradigm` | 范式对照 | 新旧对比 |
+| `architecture` | 云架构图 | 技术流程 |
+| `light` | 简洁亮色 | 通用 |
 
 ## 📁 目录结构
 
 ```
 article2graphic/
-├── SKILL.md                          ← Kiro skill 描述
+├── SKILL.md                          ← Agent 指令（Kiro/OpenClaw 激活入口）
 ├── prompts/
-│   ├── design-system-html.md         ← HTML 设计规范（agent 上下文）
+│   ├── design-system-html.md         ← HTML 设计规范
 │   └── design-system-svg.md          ← SVG 设计规范
 ├── scripts/
-│   ├── run.sh                        ← 统一入口（调用 agent）
+│   ├── run.sh                        ← CLI 入口（调用 agent）
 │   ├── extract_spec.py               ← Markdown → JSON spec（纯解析）
 │   └── screenshot.py                 ← HTML → PNG 截图（纯工具）
 ├── assets/
@@ -125,20 +149,16 @@ article2graphic/
 ## 🏗️ 架构
 
 ```
-Markdown 文章 → extract_spec.py → JSON spec
-                                      ↓
-                    run.sh 构建 prompt + 设计规范
-                                      ↓
-                    Agent (kiro-cli/claude) 生成 HTML/SVG
-                                      ↓
-                    screenshot.py → PNG + 二维码水印
+Markdown 文章
+    ↓
+extract_spec.py 提取 spec（或 agent 自动规划）
+    ↓
+run.sh 构建 prompt（设计规范 + spec 数据）
+    ↓
+Agent (Kiro / OpenClaw / kiro-cli / claude) 生成 HTML/SVG
+    ↓
+screenshot.py 截图 → PNG + 二维码水印
 ```
-
-与传统方式的区别：
-- 旧：Python 脚本 → boto3 → Bedrock API → HTML → 截图
-- 新：Shell 脚本 → Agent CLI → HTML → 截图
-
-优势：零 LLM 配置，用户已有的 agent 就是 LLM 引擎。
 
 ## 🔄 自定义
 
