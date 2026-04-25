@@ -20,7 +20,13 @@ DEFAULT_OUTPUT="$SKILL_DIR/output"
 PY="${PYTHON:-python3}"
 
 # ─── Agent 检测 ───
+# 优先级: 用户指定 > kiro-cli > claude
 detect_agent() {
+  local forced="${1:-}"
+  if [ -n "$forced" ]; then
+    echo "$forced"
+    return
+  fi
   if command -v kiro-cli &>/dev/null; then
     echo "kiro-cli"
   elif command -v claude &>/dev/null; then
@@ -87,15 +93,23 @@ generate_page_via_agent() {
   local prompt="$2"
 
   case "$agent" in
-    kiro-cli)
+    kiro-cli|kiro)
       echo "$prompt" | kiro-cli chat --no-interactive --trust-all-tools
       ;;
     claude)
-      claude -p "$prompt" --allowedTools "Write,Edit"
+      # Claude Code: -p 非交互模式，允许文件写入工具
+      claude -p "$prompt" --allowedTools "Write,Edit,Bash" --dangerously-skip-permissions 2>/dev/null \
+        || claude -p "$prompt" --allowedTools "Write,Edit" 2>/dev/null \
+        || claude -p "$prompt"
       ;;
     *)
-      echo "❌ 未找到可用的 agent (kiro-cli / claude)" >&2
-      echo "   请安装 kiro-cli 或 claude code" >&2
+      echo "❌ 未找到可用的 CLI agent (kiro-cli / claude)" >&2
+      echo "" >&2
+      echo "   可用选项:" >&2
+      echo "   1. 安装 kiro-cli: https://docs.kiro.dev/cli" >&2
+      echo "   2. 安装 claude code: npm install -g @anthropic-ai/claude-code" >&2
+      echo "   3. 在 Kiro/OpenClaw IDE 中激活 SKILL.md 后手动执行" >&2
+      echo "   4. 用 --dry-run 生成 prompt 后手动粘贴给任意 agent" >&2
       exit 1
       ;;
   esac
@@ -107,7 +121,7 @@ shift || true
 case "$cmd" in
   generate|gen|g)
     # 解析参数
-    STORY="" FROM_SPEC="" METHOD="auto" OUTPUT_DIR="" SLUG="" DRY_RUN="" FORCE=""
+    STORY="" FROM_SPEC="" METHOD="auto" OUTPUT_DIR="" SLUG="" DRY_RUN="" FORCE="" AGENT_OVERRIDE=""
     while [ $# -gt 0 ]; do
       case "$1" in
         --story) STORY="$2"; shift 2 ;;
@@ -117,6 +131,7 @@ case "$cmd" in
         --slug) SLUG="$2"; shift 2 ;;
         --dry-run) DRY_RUN="yes"; shift ;;
         --force) FORCE="yes"; shift ;;
+        --agent) AGENT_OVERRIDE="$2"; shift 2 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
       esac
     done
@@ -146,7 +161,7 @@ case "$cmd" in
 
     echo "🎨 生成信息图: ${TITLE:-$SLUG} (${TOTAL_PAGES} 张分镜)" >&2
 
-    AGENT=$(detect_agent)
+    AGENT=$(detect_agent "$AGENT_OVERRIDE")
     echo "🤖 使用 agent: $AGENT" >&2
 
     # 逐页生成
@@ -210,7 +225,8 @@ print(json.dumps(spec, ensure_ascii=False, indent=2))
   help|*)
     echo "article2graphic — 文章信息图生成引擎（agent 模式）"
     echo ""
-    echo "通过 kiro-cli / claude code 等 agent 生成信息图，"
+    echo "通过 kiro-cli / claude code 等 CLI agent 生成信息图，"
+    echo "或在 Kiro / OpenClaw IDE 中通过 SKILL.md 激活使用。"
     echo "不需要额外配置大语言模型。"
     echo ""
     echo "用法: ./scripts/run.sh <command> [options]"
@@ -226,6 +242,7 @@ print(json.dumps(spec, ensure_ascii=False, indent=2))
     echo "  --method <m>         生成方式: html | svg | auto（默认 auto）"
     echo "  --output-dir <dir>   输出目录（默认 output/）"
     echo "  --slug <name>        输出文件名前缀"
+    echo "  --agent <name>       指定 agent: kiro-cli | claude（默认自动检测）"
     echo "  --dry-run            只生成 prompt 不调用 agent"
     echo "  --force              强制重新生成"
     echo ""
@@ -233,13 +250,17 @@ print(json.dumps(spec, ensure_ascii=False, indent=2))
     echo "  <dir>                HTML 文件所在目录"
     echo "  --inject-qrcode      注入公众号二维码"
     echo ""
-    echo "支持的 agent（自动检测）:"
-    echo "  - kiro-cli (优先)"
-    echo "  - claude code"
+    echo "支持的 agent:"
+    echo "  CLI 模式（自动检测或 --agent 指定）:"
+    echo "    - kiro-cli    Kiro CLI 非交互模式"
+    echo "    - claude      Claude Code -p 非交互模式"
+    echo "  IDE 模式（通过 SKILL.md 激活）:"
+    echo "    - Kiro        安装到 ~/.kiro/skills/article2graphic/"
+    echo "    - OpenClaw    安装到对应 skills 目录"
     echo ""
     echo "示例:"
     echo "  ./scripts/run.sh gen --story article.md"
-    echo "  ./scripts/run.sh gen --story article.md --method svg"
+    echo "  ./scripts/run.sh gen --story article.md --agent claude"
     echo "  ./scripts/run.sh gen --story article.md --dry-run"
     echo "  ./scripts/run.sh ss output/ --inject-qrcode"
     ;;

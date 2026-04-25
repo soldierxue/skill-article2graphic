@@ -109,6 +109,41 @@ python3 scripts/screenshot.py --html-dir output/ --inject-qrcode
 
 ## 依赖
 
-- Agent: kiro-cli 或 claude code（自动检测）
+- Agent（三选一）:
+  - CLI 模式: `kiro-cli` 或 `claude` (Claude Code)，通过 `run.sh` 自动检测
+  - IDE 模式: Kiro 或 OpenClaw，通过 SKILL.md 激活后按流程执行
 - 截图: `pip install playwright && playwright install chromium`
 - 无需 boto3、无需 AWS credentials
+
+## 三种 Agent 的使用方式
+
+### 方式 A: Kiro IDE（推荐）
+
+将本项目安装为 Kiro global skill：
+```bash
+git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills/article2graphic
+```
+在 Kiro 对话中说"帮我生成信息图"即可自动激活，agent 按 Step 0→3 流程执行。
+
+### 方式 B: OpenClaw IDE
+
+将本项目放到 OpenClaw 可访问的目录，在对话中引用 SKILL.md：
+> 请按照 article2graphic/SKILL.md 的流程，为这篇文章生成信息图
+
+OpenClaw 会读取 SKILL.md 和 prompts/ 下的设计规范，按流程生成 HTML 并调用 screenshot.py 截图。
+
+### 方式 C: CLI 模式（kiro-cli / Claude Code）
+
+```bash
+# 自动检测可用 agent
+./scripts/run.sh gen --story article.md
+
+# 指定使用 Claude Code
+./scripts/run.sh gen --story article.md --agent claude
+
+# 指定使用 kiro-cli
+./scripts/run.sh gen --story article.md --agent kiro-cli
+
+# 生成 prompt 后手动粘贴给任意 agent
+./scripts/run.sh gen --story article.md --dry-run
+```
