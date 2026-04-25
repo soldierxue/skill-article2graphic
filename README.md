@@ -2,23 +2,21 @@
 
 将文章/故事 Markdown 转换为高质量信息图（PNG/SVG）。
 
-支持 HTML+Playwright 截图和 SVG 两种生成方式，内置 10+ 视觉风格，
-自动注入公众号二维码水印，支持多页分镜批量生成。
+通过 AI agent（kiro-cli / claude code）生成，不需要额外配置大语言模型或 AWS credentials。
 
 ## ✨ 特性
 
-- 🎨 10+ 视觉风格：暗色科技、黑板粉笔、蓝图、报纸、仪表盘、时间线、渐变卡片、范式对照、云架构图等
+- 🤖 Agent 驱动：通过 kiro-cli / claude code 生成，零 LLM 配置
+- 🎨 10+ 视觉风格：暗色科技、黑板粉笔、蓝图、报纸、仪表盘、时间线等
 - 📄 7 种图示类型：数据对比图、流程链条图、CSS 柱状图、信息卡片阵列、金句卡片、时间线、概念类比
 - 🖼️ 双模式输出：HTML+Playwright 截图（默认）或 SVG 矢量图
 - 📱 多页分镜：从 Markdown 中的 `infographic_spec` JSON 块批量生成
 - 🔖 自动水印：注入公众号二维码到右上角（可选）
-- ⚡ 增量生成：基于 spec hash 的缓存机制，内容不变则跳过
 
 ## 📦 安装为 Kiro Global Skill
 
 ```bash
-# 克隆仓库到 Kiro 全局 skills 目录
-git clone https://github.com/soldierxue/article2graphic.git ~/.kiro/skills/article2graphic
+git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills/article2graphic
 ```
 
 安装后，在 Kiro 对话中提到"生成信息图"、"infographic"、"文章配图"等关键词时会自动激活。
@@ -26,18 +24,16 @@ git clone https://github.com/soldierxue/article2graphic.git ~/.kiro/skills/artic
 ## 🔧 依赖
 
 ```bash
-pip install boto3 playwright
+# 截图工具（必需）
+pip install playwright
 playwright install chromium
+
+# Agent（二选一）
+# - kiro-cli（优先检测）
+# - claude code
 ```
 
-## ⚙️ 环境变量
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `AWS_REGION` | `us-east-1` | Bedrock 区域 |
-| `AWS_PROFILE` | _(无)_ | AWS 配置文件 |
-| `LLM_MODEL_ID` | `us.anthropic.claude-opus-4-6-v1` | 模型 ID |
-| `LLM_READ_TIMEOUT` | `600` | API 超时秒数 |
+不需要 boto3，不需要 AWS credentials。
 
 ## 🚀 用法
 
@@ -55,15 +51,11 @@ cd ~/.kiro/skills/article2graphic
 # 使用 SVG 模式
 ./scripts/run.sh gen --story article.md --method svg
 
-# 从 JSON spec 生成（stdin）
-echo '{"type":"数据对比图","title":"AI 能耗对比","data":{"left":"传统","right":"AI"}}' | \
-  ./scripts/run.sh gen --from-spec
-
-# 只生成 HTML/SVG 代码不截图
+# 只生成 prompt 不调用 agent（调试用）
 ./scripts/run.sh gen --story article.md --dry-run
 
-# 强制重新生成（忽略缓存）
-./scripts/run.sh gen --story article.md --force
+# 批量截图已有 HTML
+./scripts/run.sh screenshot output/ --inject-qrcode
 ```
 
 ### 在 Kiro 中使用
@@ -117,21 +109,42 @@ Kiro 会自动激活 article2graphic skill。
 
 ```
 article2graphic/
-├── SKILL.md                  ← Kiro skill 描述（含 front-matter）
-├── assets/
-│   └── qrcode_weixin_*.jpg   ← 公众号二维码（可替换为你自己的）
+├── SKILL.md                          ← Kiro skill 描述
+├── prompts/
+│   ├── design-system-html.md         ← HTML 设计规范（agent 上下文）
+│   └── design-system-svg.md          ← SVG 设计规范
 ├── scripts/
-│   ├── gen_illustration.py   ← 核心生成脚本
-│   ├── llm_client.py         ← Bedrock LLM 客户端
-│   └── run.sh                ← 统一入口
-└── output/                   ← 默认输出目录
+│   ├── run.sh                        ← 统一入口（调用 agent）
+│   ├── extract_spec.py               ← Markdown → JSON spec（纯解析）
+│   └── screenshot.py                 ← HTML → PNG 截图（纯工具）
+├── assets/
+│   └── qrcode_weixin_*.jpg           ← 公众号二维码（可替换）
+└── output/                           ← 默认输出目录
 ```
+
+## 🏗️ 架构
+
+```
+Markdown 文章 → extract_spec.py → JSON spec
+                                      ↓
+                    run.sh 构建 prompt + 设计规范
+                                      ↓
+                    Agent (kiro-cli/claude) 生成 HTML/SVG
+                                      ↓
+                    screenshot.py → PNG + 二维码水印
+```
+
+与传统方式的区别：
+- 旧：Python 脚本 → boto3 → Bedrock API → HTML → 截图
+- 新：Shell 脚本 → Agent CLI → HTML → 截图
+
+优势：零 LLM 配置，用户已有的 agent 就是 LLM 引擎。
 
 ## 🔄 自定义
 
-- 替换 `assets/` 下的二维码图片为你自己的公众号二维码
+- 替换 `assets/` 下的二维码图片为你自己的
+- 修改 `prompts/` 下的设计规范来调整视觉风格
 - 修改 `SKILL.md` 中的 `Activate when` 关键词来调整触发条件
-- 修改 `llm_client.py` 中的默认模型 ID 来切换 LLM
 
 ## License
 

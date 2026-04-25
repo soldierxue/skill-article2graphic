@@ -9,114 +9,93 @@ description: >
   article to graphic, 文章配图, 图文生成, 数据可视化图, 生成图片。
 ---
 
-# article2graphic — 文章信息图生成引擎
+# article2graphic — 文章信息图生成引擎（Agent 模式）
 
-从 Markdown 文章/故事文件中提取 `infographic_spec`，调用 LLM 生成 HTML/SVG 代码，
-再通过 Playwright 截图输出 PNG。
+通过 AI agent（kiro-cli / claude code / openclaw）生成信息图，
+不需要额外配置大语言模型或 AWS credentials。
 
-## 架构概览
+## 架构
 
 ```
-T11-Storyline/article2graphic/
-├── SKILL.md                  ← 本文件
-├── assets/
-│   └── qrcode_weixin_InsightsJun-small.jpg  ← 公众号二维码（可选）
+用户提供 Markdown 文章
+    ↓
+extract_spec.py 提取 infographic_spec + 故事上下文
+    ↓
+run.sh 逐页构建 prompt（含设计规范）
+    ↓
+Agent (kiro-cli / claude) 生成 HTML/SVG 代码并写入文件
+    ↓
+screenshot.py 用 Playwright 截图为 PNG + 注入二维码
+    ↓
+输出: output/*.png
+```
+
+## 目录结构
+
+```
+article2graphic/
+├── SKILL.md                          ← 本文件
+├── prompts/
+│   ├── design-system-html.md         ← HTML 信息图设计规范
+│   └── design-system-svg.md          ← SVG 信息图设计规范
 ├── scripts/
-│   ├── gen_illustration.py   ← 核心生成脚本
-│   ├── llm_client.py         ← Bedrock LLM 调用客户端
-│   └── run.sh                ← 统一入口
-└── output/                   ← 默认输出目录
+│   ├── run.sh                        ← 统一入口（调用 agent）
+│   ├── extract_spec.py               ← 从 Markdown 提取 spec（纯解析）
+│   └── screenshot.py                 ← Playwright 截图工具（纯工具）
+├── assets/
+│   └── qrcode_weixin_*.jpg           ← 公众号二维码（可选）
+└── output/                           ← 默认输出目录
 ```
 
 ## 用法
 
 ```bash
-# 从故事/文章 Markdown 生成信息图
-./scripts/run.sh generate --story path/to/story.md
+# 从 Markdown 文章生成信息图
+./scripts/run.sh generate --story path/to/article.md
 
-# 指定输出目录
-./scripts/run.sh generate --story path/to/story.md --output-dir my-output
+# 指定输出目录和方法
+./scripts/run.sh gen --story article.md --output-dir pics --method svg
 
-# 从 JSON spec 生成（stdin）
-echo '{"type":"数据对比图","title":"...","data":{}}' | \
-  ./scripts/run.sh generate --from-spec --output-dir output
+# 只生成 prompt 不调用 agent（调试用）
+./scripts/run.sh gen --story article.md --dry-run
 
-# 指定生成方式
-./scripts/run.sh generate --story story.md --method svg
-
-# 只生成代码不截图
-./scripts/run.sh generate --story story.md --dry-run
-
-# 强制重新生成（忽略缓存）
-./scripts/run.sh generate --story story.md --force
+# 批量截图已有 HTML
+./scripts/run.sh screenshot output/ --inject-qrcode
 ```
 
-## 输入格式
+## Agent 生成流程（当 Kiro 激活本 skill 时）
 
-### 方式 A：Markdown 文件（含 infographic_spec）
+当用户在 Kiro 中说"帮我生成信息图"时，请按以下步骤执行：
 
-文章 Markdown 中包含如下 JSON 块：
+### Step 1: 提取 spec
+```bash
+python3 scripts/extract_spec.py <markdown-file>
+```
+输出 JSON 包含 `specs`（分镜数组）和 `context`（故事上下文）。
 
-```markdown
-### INFOGRAPHIC 图示规格
+### Step 2: 逐页生成
+对每个 spec 页面：
+1. 读取 `prompts/design-system-html.md`（或 svg 版本）
+2. 结合 spec 中的类型、风格、数据等信息
+3. 生成完整的 HTML/SVG 代码
+4. 将代码写入 `output/{slug}-P{n}.html`（或 .svg）
 
-```json
-[
-  {
-    "page": 1,
-    "type": "数据对比图",
-    "title": "图表标题",
-    "color_scheme": "dark",
-    "focal_point": "核心数据",
-    "memory_hook": "记忆点",
-    "data": { ... },
-    "layout_notes": "布局说明"
-  }
-]
-```　
+### Step 3: 截图
+```bash
+python3 scripts/screenshot.py --html-dir output/ --inject-qrcode
 ```
 
-### 方式 B：JSON spec（stdin）
+## 设计规范
 
-直接传入 JSON 对象或数组。
+详见 `prompts/design-system-html.md` 和 `prompts/design-system-svg.md`。
 
-## 支持的视觉风格
-
-| style | 说明 | 适合场景 |
-|-------|------|---------|
-| dark | 科技暗色 | 数据对比、技术概览 |
-| light | 简洁亮色 | 通用信息卡片 |
-| chalkboard | 黑板粉笔风 | 教学、概念解释 |
-| blueprint | 蓝图工程风 | 技术架构 |
-| newspaper | 报纸杂志风 | 新闻摘要、多栏排版 |
-| gradient | 渐变卡片风 | 社交媒体友好 |
-| paradigm | 范式转变对照 | 新旧对比、变革 |
-| dashboard | 数据仪表盘 | 多维度指标、评分 |
-| timeline | 蛇形时间线 | 步骤、里程碑 |
-| architecture | 云架构图 | 技术架构、流程 |
-
-## 支持的图示类型
-
-1. 数据对比图
-2. 流程链条图
-3. CSS 柱状图
-4. 信息卡片阵列
-5. 金句卡片
-6. 时间线
-7. 概念类比
+核心原则：
+- 10+ 视觉风格：dark, light, chalkboard, blueprint, newspaper, gradient, paradigm, dashboard, timeline, architecture
+- 7 种图示类型：数据对比图、流程链条图、CSS 柱状图、信息卡片阵列、金句卡片、时间线、概念类比
+- 反 AI Slop：非对称布局、打破常规的视觉元素、明确的记忆点
 
 ## 依赖
 
-```bash
-pip install boto3 playwright
-playwright install chromium
-```
-
-## 环境变量
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| AWS_REGION | us-east-1 | Bedrock 区域 |
-| AWS_PROFILE | (无) | AWS 配置文件 |
-| LLM_MODEL_ID | us.anthropic.claude-opus-4-6-v1 | 模型 ID |
-| LLM_READ_TIMEOUT | 600 | API 超时秒数 |
+- Agent: kiro-cli 或 claude code（自动检测）
+- 截图: `pip install playwright && playwright install chromium`
+- 无需 boto3、无需 AWS credentials
