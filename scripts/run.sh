@@ -140,9 +140,9 @@ case "$cmd" in
       exit 1
     fi
 
-    # 解析 specs 数组
-    TOTAL_PAGES=$($PY -c "import json,sys; d=json.loads(sys.stdin.read()); print(len(d.get('specs',d if isinstance(d,list) else [d])))" <<< "$SPEC_JSON")
-    TITLE=$($PY -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('context',{}).get('title',''))" <<< "$SPEC_JSON" 2>/dev/null || echo "")
+    # 解析 specs 数组（兼容 specs / pages 两种字段名）
+    TOTAL_PAGES=$($PY -c "import json,sys; d=json.loads(sys.stdin.read()); specs=d.get('specs',d.get('pages',d if isinstance(d,list) else [d])); print(len(specs))" <<< "$SPEC_JSON")
+    TITLE=$($PY -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('context',d.get('story_context',{})).get('title',''))" <<< "$SPEC_JSON" 2>/dev/null || echo "")
 
     echo "🎨 生成信息图: ${TITLE:-$SLUG} (${TOTAL_PAGES} 张分镜)" >&2
 
@@ -156,8 +156,8 @@ case "$cmd" in
       PAGE_SPEC=$($PY -c "
 import json, sys
 d = json.loads(sys.stdin.read())
-specs = d.get('specs', d if isinstance(d, list) else [d])
-ctx = d.get('context', {})
+specs = d.get('specs', d.get('pages', d if isinstance(d, list) else [d]))
+ctx = d.get('context', d.get('story_context', {}))
 spec = specs[$i]
 spec['story_context'] = ctx
 print(json.dumps(spec, ensure_ascii=False, indent=2))
