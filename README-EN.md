@@ -142,18 +142,20 @@ If the article has no `infographic_spec`, the agent auto-plans per SKILL.md rule
 
 ## 🎨 Visual Styles
 
-| Style | Description | Best For |
-|-------|-------------|----------|
-| `dark` | Tech dark theme | Data comparison, tech overview |
-| `gradient` | Gradient cards | Conference coverage, social media |
-| `chalkboard` | Chalk on blackboard | Teaching, concept explanation |
-| `blueprint` | Engineering blueprint | Technical architecture |
-| `newspaper` | Magazine layout | News summaries |
-| `dashboard` | Data dashboard | Multi-dimensional metrics |
-| `timeline` | Snake timeline | Steps, milestones |
-| `paradigm` | Paradigm shift | Before/after comparison |
-| `architecture` | Cloud architecture | Technical flows |
-| `light` | Clean light theme | General purpose |
+Same content, 10 styles. All examples below use TPU Ironwood vs Trainium3 chip spec data:
+
+| | |
+|:---:|:---:|
+| ![dark](examples/style-dark.png) | ![light](examples/style-light.png) |
+| `dark` — Tech Dark | `light` — Clean Light |
+| ![gradient](examples/style-gradient.png) | ![blueprint](examples/style-blueprint.png) |
+| `gradient` — Gradient Cards | `blueprint` — Engineering Blueprint |
+| ![dashboard](examples/style-dashboard.png) | ![newspaper](examples/style-newspaper.png) |
+| `dashboard` — Data Dashboard | `newspaper` — Magazine Layout |
+| ![chalkboard](examples/style-chalkboard.png) | ![paradigm](examples/style-paradigm.png) |
+| `chalkboard` — Chalk on Blackboard | `paradigm` — Paradigm Shift |
+| ![timeline](examples/style-timeline.png) | ![architecture](examples/style-architecture.png) |
+| `timeline` — Snake Timeline | `architecture` — Cloud Architecture |
 
 ## 📁 Directory Structure
 

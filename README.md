@@ -142,18 +142,20 @@ cat spec.json | ./scripts/run.sh gen --from-spec --slug my-article
 
 ## 🎨 视觉风格
 
-| style | 说明 | 适合场景 |
-|-------|------|---------|
-| `dark` | 科技暗色 | 数据对比、技术概览 |
-| `gradient` | 渐变卡片风 | 大会报道、社交媒体 |
-| `chalkboard` | 黑板粉笔风 | 教学、概念解释 |
-| `blueprint` | 蓝图工程风 | 技术架构 |
-| `newspaper` | 报纸杂志风 | 新闻摘要 |
-| `dashboard` | 数据仪表盘 | 多维度指标 |
-| `timeline` | 蛇形时间线 | 步骤、里程碑 |
-| `paradigm` | 范式对照 | 新旧对比 |
-| `architecture` | 云架构图 | 技术流程 |
-| `light` | 简洁亮色 | 通用 |
+同一内容，10 种风格。以下示例均使用 TPU Ironwood vs Trainium3 芯片规格数据生成：
+
+| | |
+|:---:|:---:|
+| ![dark](examples/style-dark.png) | ![light](examples/style-light.png) |
+| `dark` — 科技暗色 | `light` — 简洁亮色 |
+| ![gradient](examples/style-gradient.png) | ![blueprint](examples/style-blueprint.png) |
+| `gradient` — 渐变卡片风 | `blueprint` — 蓝图工程风 |
+| ![dashboard](examples/style-dashboard.png) | ![newspaper](examples/style-newspaper.png) |
+| `dashboard` — 数据仪表盘 | `newspaper` — 报纸杂志风 |
+| ![chalkboard](examples/style-chalkboard.png) | ![paradigm](examples/style-paradigm.png) |
+| `chalkboard` — 黑板粉笔风 | `paradigm` — 范式对照 |
+| ![timeline](examples/style-timeline.png) | ![architecture](examples/style-architecture.png) |
+| `timeline` — 蛇形时间线 | `architecture` — 云架构图 |
 
 ## 📁 目录结构
 
