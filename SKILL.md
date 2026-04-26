@@ -98,6 +98,14 @@ python3 scripts/extract_spec.py <markdown-file>
 python3 scripts/screenshot.py --html-dir output/ --inject-qrcode
 ```
 
+### Step 4: 生成推广短文
+信息图截图完成后，生成社交媒体推广短文：
+1. 读取 `prompts/promo-writer.md` 获取写作规范
+2. 结合文章标题、核心数据点、已生成的图片文件列表
+3. 生成包含朋友圈版和小红书版的 Markdown 文件
+4. 将文件写入 `output/{slug}-promo.md`
+5. 在短文中用 `![描述](图片文件名)` 引用信息图
+
 ## 设计规范
 
 详见 `prompts/design-system-html.md` 和 `prompts/design-system-svg.md`。

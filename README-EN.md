@@ -53,6 +53,7 @@ The agent auto-activates SKILL.md and follows the workflow:
 1. Scan article chapters, plan storyboard spec
 2. Generate HTML page by page (using design specs from `prompts/`)
 3. Run `screenshot.py` for batch screenshots + QR code injection
+4. Generate WeChat Moments + Xiaohongshu promo copy (`{slug}-promo.md`)
 
 OpenClaw works the same way — reference SKILL.md in your prompt.
 
@@ -136,7 +137,8 @@ article2graphic/
 ├── SKILL.md                          ← Agent instructions (Kiro/OpenClaw entry point)
 ├── prompts/
 │   ├── design-system-html.md         ← HTML design specification
-│   └── design-system-svg.md          ← SVG design specification
+│   ├── design-system-svg.md          ← SVG design specification
+│   └── promo-writer.md               ← Social media promo writing spec
 ├── scripts/
 │   ├── run.sh                        ← CLI entry point (calls agent)
 │   ├── extract_spec.py               ← Markdown → JSON spec (pure parser)
@@ -158,6 +160,8 @@ run.sh builds prompt (design spec + spec data)
 Agent (Kiro / OpenClaw / kiro-cli / claude) generates HTML/SVG
     ↓
 screenshot.py captures → PNG + QR watermark
+    ↓
+Agent generates promo copy → {slug}-promo.md (WeChat Moments + Xiaohongshu)
 ```
 
 ## 🔄 Customization

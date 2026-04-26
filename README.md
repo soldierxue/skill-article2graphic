@@ -53,6 +53,7 @@ Agent 会自动激活 SKILL.md，按流程执行：
 1. 扫描文章章节结构，规划分镜 spec
 2. 逐页生成 HTML（读取 `prompts/` 下的设计规范）
 3. 调用 `screenshot.py` 批量截图 + 注入二维码
+4. 生成朋友圈 + 小红书推广短文（`{slug}-promo.md`）
 
 OpenClaw 同理，引用 SKILL.md 即可。
 
@@ -136,7 +137,8 @@ article2graphic/
 ├── SKILL.md                          ← Agent 指令（Kiro/OpenClaw 激活入口）
 ├── prompts/
 │   ├── design-system-html.md         ← HTML 设计规范
-│   └── design-system-svg.md          ← SVG 设计规范
+│   ├── design-system-svg.md          ← SVG 设计规范
+│   └── promo-writer.md               ← 推广短文写作规范
 ├── scripts/
 │   ├── run.sh                        ← CLI 入口（调用 agent）
 │   ├── extract_spec.py               ← Markdown → JSON spec（纯解析）
@@ -158,6 +160,8 @@ run.sh 构建 prompt（设计规范 + spec 数据）
 Agent (Kiro / OpenClaw / kiro-cli / claude) 生成 HTML/SVG
     ↓
 screenshot.py 截图 → PNG + 二维码水印
+    ↓
+Agent 生成推广短文 → {slug}-promo.md（朋友圈 + 小红书版）
 ```
 
 ## 🔄 自定义

@@ -205,6 +205,46 @@ print(json.dumps(spec, ensure_ascii=False, indent=2))
       echo "" >&2
       echo "📸 截图..." >&2
       $PY "$SCRIPT_DIR/screenshot.py" --html-dir "$OUTPUT_DIR" --inject-qrcode
+
+      # 生成推广短文
+      echo "" >&2
+      echo "📝 生成推广短文..." >&2
+      PNG_LIST=$($PY -c "
+import os, json
+pngs = sorted([f for f in os.listdir('$OUTPUT_DIR') if f.startswith('$SLUG') and f.endswith('.png')])
+print(json.dumps(pngs, ensure_ascii=False))
+")
+      PROMO_PROMPT=$(cat <<PROMOPT
+请按照以下规范，为这篇文章生成社交媒体推广短文。
+
+## 写作规范
+$(cat "$SKILL_DIR/prompts/promo-writer.md")
+
+## 文章信息
+标题：${TITLE:-$SLUG}
+核心数据：$($PY -c "import json,sys; d=json.loads(sys.stdin.read()); print(json.dumps(d.get('context',d.get('story_context',{})).get('data_points',[]), ensure_ascii=False))" <<< "$SPEC_JSON")
+
+## 已生成的信息图
+$PNG_LIST
+
+## 输出要求
+将推广短文写入文件: $OUTPUT_DIR/${SLUG}-promo.md
+只写 Markdown 内容，不要包含任何解释文字。
+PROMOPT
+)
+      if [ "$AGENT" != "none" ]; then
+        generate_page_via_agent "$AGENT" "$PROMO_PROMPT"
+        if [ -f "$OUTPUT_DIR/${SLUG}-promo.md" ]; then
+          echo "  ✅ 推广短文: $OUTPUT_DIR/${SLUG}-promo.md" >&2
+        else
+          echo "  ⚠️ 推广短文未生成，可手动执行 --dry-run 获取 prompt" >&2
+        fi
+      fi
+    else
+      # dry-run 模式也生成 promo prompt
+      echo "" >&2
+      echo "📝 [dry-run] 推广短文 prompt:" >&2
+      echo "    $OUTPUT_DIR/${SLUG}-promo.prompt.txt" >&2
     fi
 
     echo "" >&2
