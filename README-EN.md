@@ -28,14 +28,12 @@ Auto-activates when you mention "infographic", "generate illustration", etc. in 
 ### As a Claude Code Skill
 
 ```bash
-# Option 1: Clone into project directory — Claude Code auto-reads CLAUDE.md
-git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
-
-# Option 2: Clone to global directory, reference in ~/.claude/CLAUDE.md
 git clone https://github.com/soldierxue/skill-article2graphic.git ~/.claude/skills/article2graphic
-# Then add to ~/.claude/CLAUDE.md:
-# When user asks to generate infographics, follow ~/.claude/skills/article2graphic/SKILL.md
 ```
+
+After installation, use in Claude Code by:
+- Saying "generate infographic", "article illustration", etc. in chat to auto-trigger
+- Or explicitly invoke `/article2graphic`
 
 ### As an OpenClaw Skill
 

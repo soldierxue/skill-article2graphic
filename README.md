@@ -28,14 +28,12 @@ git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills
 ### 作为 Claude Code Skill
 
 ```bash
-# 方式 1：克隆到项目目录，Claude Code 会自动读取 CLAUDE.md
-git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
-
-# 方式 2：克隆到全局目录，在 ~/.claude/CLAUDE.md 中引用
 git clone https://github.com/soldierxue/skill-article2graphic.git ~/.claude/skills/article2graphic
-# 然后在 ~/.claude/CLAUDE.md 中添加：
-# 当用户要求生成信息图时，参考 ~/.claude/skills/article2graphic/SKILL.md 执行
 ```
+
+安装后在 Claude Code 中通过以下方式使用：
+- 对话中说"生成信息图"、"文章配图"、"infographic"等关键词自动触发
+- 或显式调用 `/article2graphic`
 
 ### 作为 OpenClaw Skill
 
