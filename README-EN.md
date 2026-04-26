@@ -23,13 +23,38 @@ Powered by AI agents — no LLM configuration or API keys required. Supports Kir
 git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills/article2graphic
 ```
 
-### As a Standalone Project
+Auto-activates when you mention "infographic", "generate illustration", etc. in Kiro chat.
+
+### As a Claude Code Skill
+
+```bash
+# Option 1: Clone into project directory — Claude Code auto-reads CLAUDE.md
+git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
+
+# Option 2: Clone to global directory, reference in ~/.claude/CLAUDE.md
+git clone https://github.com/soldierxue/skill-article2graphic.git ~/.claude/skills/article2graphic
+# Then add to ~/.claude/CLAUDE.md:
+# When user asks to generate infographics, follow ~/.claude/skills/article2graphic/SKILL.md
+```
+
+### As an OpenClaw Skill
+
+```bash
+# Clone into workspace directory
+git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
+```
+
+In OpenClaw chat, reference:
+> Follow article2graphic/SKILL.md to generate infographics for this article
+
+### As a Standalone Project (CLI Mode)
 
 ```bash
 git clone https://github.com/soldierxue/skill-article2graphic.git
 cd skill-article2graphic
 pip install playwright
 playwright install chromium
+./scripts/run.sh gen --story path/to/article.md
 ```
 
 ## 🔧 Dependencies
@@ -135,6 +160,7 @@ If the article has no `infographic_spec`, the agent auto-plans per SKILL.md rule
 ```
 article2graphic/
 ├── SKILL.md                          ← Agent instructions (Kiro/OpenClaw entry point)
+├── CLAUDE.md                         ← Claude Code entry point (references SKILL.md)
 ├── prompts/
 │   ├── design-system-html.md         ← HTML design specification
 │   ├── design-system-svg.md          ← SVG design specification

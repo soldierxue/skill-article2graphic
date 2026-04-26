@@ -23,13 +23,38 @@
 git clone https://github.com/soldierxue/skill-article2graphic.git ~/.kiro/skills/article2graphic
 ```
 
-### 作为独立项目
+安装后在 Kiro 对话中提到"生成信息图"等关键词时自动激活。
+
+### 作为 Claude Code Skill
+
+```bash
+# 方式 1：克隆到项目目录，Claude Code 会自动读取 CLAUDE.md
+git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
+
+# 方式 2：克隆到全局目录，在 ~/.claude/CLAUDE.md 中引用
+git clone https://github.com/soldierxue/skill-article2graphic.git ~/.claude/skills/article2graphic
+# 然后在 ~/.claude/CLAUDE.md 中添加：
+# 当用户要求生成信息图时，参考 ~/.claude/skills/article2graphic/SKILL.md 执行
+```
+
+### 作为 OpenClaw Skill
+
+```bash
+# 克隆到工作区目录
+git clone https://github.com/soldierxue/skill-article2graphic.git article2graphic
+```
+
+在 OpenClaw 对话中引用：
+> 请按照 article2graphic/SKILL.md 的流程，为这篇文章生成信息图
+
+### 作为独立项目（CLI 模式）
 
 ```bash
 git clone https://github.com/soldierxue/skill-article2graphic.git
 cd skill-article2graphic
 pip install playwright
 playwright install chromium
+./scripts/run.sh gen --story path/to/article.md
 ```
 
 ## 🔧 依赖
@@ -135,6 +160,7 @@ cat spec.json | ./scripts/run.sh gen --from-spec --slug my-article
 ```
 article2graphic/
 ├── SKILL.md                          ← Agent 指令（Kiro/OpenClaw 激活入口）
+├── CLAUDE.md                         ← Claude Code 入口（引用 SKILL.md）
 ├── prompts/
 │   ├── design-system-html.md         ← HTML 设计规范
 │   ├── design-system-svg.md          ← SVG 设计规范
